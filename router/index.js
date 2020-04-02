@@ -11,6 +11,9 @@ router.get('/', function (req, res) {
   res.send('欢迎学习node');
 });
 
+router.use('/user', userRouter);
+
+// 中间件是逐一向下传递的
 
 /**
  * 集中处理404请求的中间件
@@ -20,5 +23,25 @@ router.get('/', function (req, res) {
 router.use((req, res, next) => {
   next(boom.notFound('接口不存在'));
 });
-router.use('/user', userRouter)
+
+/**
+ * 自定义路由异常处理中间件
+ * 注意两点：
+ * 第一，方法的参数不能减少
+ * 第二，方法必须放在路由最后
+ */
+router.use((err, req, res, next) => {
+  console.log(err);
+  const msg = (err && err.message) || '系统错误';
+  const statusCode = (err.output && err.output.statusCode) || 500;
+  const errorMsg = (err.output && err.output.payload && err.output.payload.error) || err.message;
+  res.status(statusCode).json({
+    code: CODE_ERROR,
+    msg,
+    error: statusCode,
+    errorMsg
+  })
+})
+
+
 module.exports = router;
